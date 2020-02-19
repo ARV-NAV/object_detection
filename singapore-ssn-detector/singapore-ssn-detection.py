@@ -9,7 +9,8 @@ tensorflowNet = cv2.dnn.readNetFromTensorflow(
 
 # Set up a list of class labels. There's a tensorflow method,
 # but in this case I'm just creating a list since there's only
-# 10 classes... Refactor later
+# 10 classes... Refactor later. See ./ssd_inc...1_29/labels.pbtxt
+# Upon further experimentation, this list seems to be out of order
 labels = ['Ferry',
           'Buoy',
           'Vessel/ship',
@@ -18,8 +19,10 @@ labels = ['Ferry',
           'Kayak',
           'Sail boat',
           'Swimming person',
-          'Flying bird/plane'
-          'Other']
+          'Flying bird/plane',
+          'Other',
+          '????',
+          'dock?']
 
 # initialize a list of colors to represent each possible class label
 np.random.seed(38)
@@ -27,11 +30,20 @@ colors = np.random.randint(0, 255, size=(len(labels), 3),
 	dtype="uint8")
 
 # Input image
-img = cv2.imread('img.png')
+img = cv2.imread('boats3.jpg')
+
+h, w = img.shape[:2]
+#crop img to square for use in detector
+#img = img[0:h, int((w/2)-(h/2)):int((w/2)+(h/2))]
+#img = img[0:h, 0:int(h)]
+
 rows, cols, channels = img.shape
 
 # Use the given image as input, which needs to be blob(s).
-tensorflowNet.setInput(cv2.dnn.blobFromImage(img, size=(300, 300), swapRB=True, crop=False))
+# Originally, parameters for blob were
+# blobFromImage(img,size=(300,300), swapRB=True, crop=True)
+# This seems to work better
+tensorflowNet.setInput(cv2.dnn.blobFromImage(cv2.resize(img,(300,300)), swapRB=True, crop=True))
 
 # Runs a forward pass to compute the net output
 networkOutput = tensorflowNet.forward()
@@ -40,8 +52,9 @@ networkOutput = tensorflowNet.forward()
 for detection in networkOutput[0,0]:
 
     score = float(detection[2])
-    if score > 0.2:
+    if score > 0.5:
         objID = int(detection[1])+1
+        print(objID)
         print("Found a " + labels[objID])
         left = detection[3] * cols
         top = detection[4] * rows
@@ -58,6 +71,8 @@ for detection in networkOutput[0,0]:
         cv2.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), theColor, thickness=2)
 
 # Show the image with a rectagle surrounding the detected objects
-cv2.imshow('Image', img)
+h, w = img.shape[:2]
+scaledImg = cv2.resize(img,(600, int((h/w)*600)))
+cv2.imshow('Image', scaledImg)
 cv2.waitKey()
 cv2.destroyAllWindows()
