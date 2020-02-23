@@ -36,6 +36,9 @@ ct = CentroidTracker()
 # This is the main loop that processes frames from video cameras
 # or input video. For a camera, use:
 # cap = cv2.VideoCapture(**camera number**)
+
+# To test, I recomend using a video from the Singapore Maritime dataset.
+# Files are too large for github, so must be downloaded independently.
 cap = cv2.VideoCapture("MVI_0797_VIS_OB.avi")
 while(True):
     # Input image
