@@ -39,6 +39,7 @@ ct = CentroidTracker()
 
 # To test, I recomend using a video from the Singapore Maritime dataset.
 # Files are too large for github, so must be downloaded independently.
+#cap = cv2.VideoCapture("testvid.mp4")
 cap = cv2.VideoCapture("MVI_0797_VIS_OB.avi")
 while(True):
     # Input image
@@ -79,8 +80,8 @@ while(True):
             right = detection[5] * cols
             bottom = detection[6] * rows
             # centroid tracker takes format smallerX, smallerY, largerX, largerY
-            rects.append([left, bottom, right, top])
-
+            rects.append([left, bottom, right, top, (right-left, top-bottom)])
+            print("here...",rects)
             #draw a coloured rectangle around object.
             # rectangle did not play nice with numpy array, hence manual casting
             theColor = (int(COLORS[objID][0]), int(COLORS[objID][1]), int(COLORS[objID][2]))
@@ -91,7 +92,7 @@ while(True):
             cv2.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), theColor, thickness=2)
 
     # Now, update the centroid tracker with the newly found bounding boxes
-    objects = ct.update(rects)
+    (objects, data) = ct.update(rects)
 
     #loop over the tracked objects and display the centroid
     for (objID, centroid) in objects.items():
