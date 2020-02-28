@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 from centroidtracker import CentroidTracker
+from objData import objData
+import datetime
 
 # Load a model imported from Tensorflow
 tensorflowNet = cv2.dnn.readNetFromTensorflow(
@@ -75,31 +77,24 @@ while(True):
             # Subtract 1 since LABEL list is 0 indexed while DNN output is 1 indexed
             objID = int(detection[1])-1
             # print("Found a " + LABELS[objID] + " with confidence " + str(detection[2]))
-            left = detection[3] * cols
-            top = detection[4] * rows
-            right = detection[5] * cols
-            bottom = detection[6] * rows
+            left = int(detection[3] * cols)
+            top = int(detection[4] * rows)
+            right = int(detection[5] * cols)
+            bottom = int(detection[6] * rows)
+            data = objData((left, bottom, right, top),
+                           datetime.datetime.now().strftime("%H:%M:%S.%f"),
+                           LABELS[objID],
+                           detection[2],
+                           int(COLORS[objID][0]))
             # centroid tracker takes format smallerX, smallerY, largerX, largerY
-            rects.append([left, bottom, right, top, (right-left, top-bottom)])
-            print("here...",rects)
-            #draw a coloured rectangle around object.
-            # rectangle did not play nice with numpy array, hence manual casting
-            theColor = (int(COLORS[objID][0]), int(COLORS[objID][1]), int(COLORS[objID][2]))
-            # Draw some text too
-            text = "{}: {:.4f}".format(LABELS[objID], detection[2])
-            cv2.putText(img, text, (int(left), int(top) - 5),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, theColor, 2)
-            cv2.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), theColor, thickness=2)
+            # and a data object/tuple/structure/etc.
+            rects.append([left, bottom, right, top, data])
 
     # Now, update the centroid tracker with the newly found bounding boxes
     (objects, data) = ct.update(rects)
 
-    #loop over the tracked objects and display the centroid
-    for (objID, centroid) in objects.items():
-        text = "ID {}".format(objID)
-        cv2.putText(img, text, (centroid[0] - 10, centroid[1] - 10),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-        cv2.circle(img, (centroid[0], centroid[1]), 4, (0, 0, 0), -1)
+    # Draw the objects being tracked
+    ct.drawObjects(img)
 
     # Show the image with a rectagle surrounding the detected objects
     cv2.imshow('Image', img)
